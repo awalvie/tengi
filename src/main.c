@@ -11,10 +11,43 @@
 #define READ_LINE_BUF 1024
 #define ARG_BUF 64
 
+
+/* ------------------------------------------------------------------------ */
+/* Built In Functions */
+int tengi_cd(char **args);
+
+char *builtin[] = {
+	"cd",
+};
+
+int (*builtin_func[])(char **) = {
+	&tengi_cd,
+};
+
+int total_builtins()
+{
+	return sizeof(builtin)/sizeof(char *);
+}
+
+int tengi_cd(char **args)
+{
+	if (args[1] == NULL) {
+		fprintf(stderr, "cd needs at least one argument");
+	} else {
+		if (chdir(args[1]) != 0) {
+			perror("chdir");
+		}
+	}
+	return 1;
+}
+
+/* ------------------------------------------------------------------------ */
+
 void print_prompt()
 {
 	printf("(tengi)$ ");
 }
+
 
 /* read line from stdin */
 char *read_line(void)
@@ -59,7 +92,7 @@ char **split_args(char *line)
 	int arg_pos = 0;
 	int bufsize = ARG_BUF;
 	char *token;
-	char **args = malloc(ARG_BUF * sizeof(char*));
+	char **args = malloc(bufsize * sizeof(char*));
 
 	if (!args) {
 		fprintf(stderr, "Could not allocate buffer for args");
@@ -87,9 +120,9 @@ char **split_args(char *line)
 int execute(char **args)
 {
 	pid_t pid, wait_id;
-	pid = fork();
 	int p_status;
 
+	pid = fork();
 	/* read the man page for waitpid if having trouble understanding */
 	if (pid == 0) {
 		/* child */
@@ -106,22 +139,38 @@ int execute(char **args)
 			wait_id = waitpid(pid, &p_status, WUNTRACED);
 		} while (!WIFEXITED(p_status) && !WIFSIGNALED(p_status));
 	}
-
 	return 1;
+}
+
+int tengi_run(char **args)
+{
+	int i;
+
+	if (args[0] == NULL) {
+		return 1;
+	}
+
+	for (i=0; i < total_builtins(); i++) {
+		if (strcmp(args[0], builtin[i]) == 0) {
+			return (*builtin_func[i])(args);
+		}
+	}
+
+	return execute(args);
+
 }
 
 int main(void)
 {
 	do {
 		print_prompt();
+
 		char *line = read_line();
 		char **args = split_args(line);
-
 		/* serach if first word is a builtin, if yes, call it, */
 		/* otherwise execute the command with arguments */
-		execute(args);
-
-
+		tengi_run(args);
+		/* free things */
 		free(line);
 		free(args);
 	} while (true);
