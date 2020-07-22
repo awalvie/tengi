@@ -127,11 +127,11 @@ int execute(char **args)
 	if (pid == 0) {
 		/* child */
 		if (execvp(args[0], args) == -1) {
-			fprintf(stderr, "Could not call exec");
+			perror("execvp");
 			exit(EXIT_FAILURE);
 		}
 	} else if (pid < 0) {
-		fprintf(stderr, "Could not fork process");
+		perror("fork");
 		exit(EXIT_FAILURE);
 	} else {
 		/* parent */
@@ -164,7 +164,6 @@ int main(void)
 {
 	do {
 		print_prompt();
-
 		char *line = read_line();
 		char **args = split_args(line);
 		/* serach if first word is a builtin, if yes, call it, */
