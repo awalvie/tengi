@@ -15,13 +15,17 @@
 /* ------------------------------------------------------------------------ */
 /* Built In Functions */
 int tengi_cd(char **args);
+int tengi_exit(char **args);
 
 char *builtin[] = {
 	"cd",
+	"exit",
+
 };
 
 int (*builtin_func[])(char **) = {
 	&tengi_cd,
+	&tengi_exit,
 };
 
 int total_builtins()
@@ -39,6 +43,11 @@ int tengi_cd(char **args)
 		}
 	}
 	return 1;
+}
+
+int tengi_exit(char **args) {
+	printf("\nExiting tengi, Bye!\n");
+	return 0;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -119,7 +128,7 @@ char **split_args(char *line)
 
 int execute(char **args)
 {
-	pid_t pid;
+	pid_t pid, wait_id;
 	int p_status;
 
 	pid = fork();
@@ -136,7 +145,7 @@ int execute(char **args)
 	} else {
 		/* parent */
 		do {
-			waitpid(pid, &p_status, WUNTRACED);
+			wait_id = waitpid(pid, &p_status, WUNTRACED);
 		} while (!WIFEXITED(p_status) && !WIFSIGNALED(p_status));
 	}
 	return 1;
