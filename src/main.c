@@ -32,7 +32,7 @@ int total_builtins()
 int tengi_cd(char **args)
 {
 	if (args[1] == NULL) {
-		fprintf(stderr, "cd needs at least one argument");
+		fprintf(stderr, "cd needs at least one argument\n");
 	} else {
 		if (chdir(args[1]) != 0) {
 			perror("chdir");
@@ -119,7 +119,7 @@ char **split_args(char *line)
 
 int execute(char **args)
 {
-	pid_t pid, wait_id;
+	pid_t pid;
 	int p_status;
 
 	pid = fork();
@@ -136,7 +136,7 @@ int execute(char **args)
 	} else {
 		/* parent */
 		do {
-			wait_id = waitpid(pid, &p_status, WUNTRACED);
+			waitpid(pid, &p_status, WUNTRACED);
 		} while (!WIFEXITED(p_status) && !WIFSIGNALED(p_status));
 	}
 	return 1;
@@ -160,18 +160,28 @@ int tengi_run(char **args)
 
 }
 
-int main(void)
+void loop(void)
 {
+	int status = 0;
+	char *line;
+	char **args;
+
 	do {
 		print_prompt();
-		char *line = read_line();
-		char **args = split_args(line);
+		line = read_line();
+		args = split_args(line);
 		/* serach if first word is a builtin, if yes, call it, */
 		/* otherwise execute the command with arguments */
-		tengi_run(args);
+		status = tengi_run(args);
 		/* free things */
 		free(line);
 		free(args);
-	} while (true);
-	return 0;
+	} while (status);
+}
+
+int main(void)
+{
+	loop();
+
+	return EXIT_SUCCESS;
 }
