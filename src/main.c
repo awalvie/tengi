@@ -11,7 +11,6 @@
 #define READ_LINE_BUF 1024
 #define ARG_BUF 64
 
-
 /* ------------------------------------------------------------------------ */
 /* Built In Functions */
 int tengi_cd(char **args);
@@ -30,7 +29,7 @@ int (*builtin_func[])(char **) = {
 
 int total_builtins()
 {
-	return sizeof(builtin)/sizeof(char *);
+	return sizeof(builtin) / sizeof(char *);
 }
 
 int tengi_cd(char **args)
@@ -45,7 +44,8 @@ int tengi_cd(char **args)
 	return 1;
 }
 
-int tengi_exit(char **args) {
+int tengi_exit(char **args)
+{
 	printf("\nExiting tengi, Bye!\n");
 	return 0;
 }
@@ -56,7 +56,6 @@ void print_prompt()
 {
 	printf("(tengi)$ ");
 }
-
 
 /* read line from stdin */
 char *read_line(void)
@@ -85,7 +84,8 @@ char *read_line(void)
 			bufsize += READ_LINE_BUF;
 			buffer = realloc(buffer, bufsize * sizeof(char));
 			if (!buffer) {
-				fprintf(stderr, "Cannot realloc memory for input");
+				fprintf(stderr,
+					"Cannot realloc memory for input");
 				exit(EXIT_FAILURE);
 			}
 		}
@@ -101,7 +101,7 @@ char **split_args(char *line)
 	int arg_pos = 0;
 	int bufsize = ARG_BUF;
 	char *token;
-	char **args = malloc(bufsize * sizeof(char*));
+	char **args = malloc(bufsize * sizeof(char *));
 
 	if (!args) {
 		fprintf(stderr, "Could not allocate buffer for args");
@@ -114,9 +114,10 @@ char **split_args(char *line)
 		arg_pos++;
 		if (arg_pos >= bufsize) {
 			bufsize += ARG_BUF;
-			args = realloc(args, bufsize * sizeof(char*));
+			args = realloc(args, bufsize * sizeof(char *));
 			if (!args) {
-				fprintf(stderr, "Could not realloc memory for input");
+				fprintf(stderr,
+					"Could not realloc memory for input");
 				exit(EXIT_FAILURE);
 			}
 		}
@@ -159,14 +160,13 @@ int tengi_run(char **args)
 		return 1;
 	}
 
-	for (i=0; i < total_builtins(); i++) {
+	for (i = 0; i < total_builtins(); i++) {
 		if (strcmp(args[0], builtin[i]) == 0) {
 			return (*builtin_func[i])(args);
 		}
 	}
 
 	return execute(args);
-
 }
 
 void loop(void)
