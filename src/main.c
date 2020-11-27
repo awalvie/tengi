@@ -11,6 +11,9 @@
 #define READ_LINE_BUF 1024
 #define ARG_BUF 64
 
+int in, out, input, output, append, dont_wait;
+char *inputFile, *outputFile;
+
 /* ------------------------------------------------------------------------ */
 /* Built In Functions */
 int tengi_cd(char **args);
@@ -51,6 +54,48 @@ int tengi_exit(char **args)
 }
 
 /* ------------------------------------------------------------------------ */
+
+void checkIO(char **args)
+{
+	input = 0;
+	output = 0;
+	append = 0;
+
+	int i = 0;
+
+	while (args[i] != NULL) {
+		if (!strcmp(args[i], "<")) {
+			strcpy(args[i], "\0");
+			inputFile = args[i + 1];
+			input = 1;
+		} else if (!strcmp(args[i], ">")) {
+			outputFile = args[i + 1];
+			args[i] = NULL;
+			output = 1;
+			break;
+		} else if (!strcmp(args[i], ">>")) {
+			outputFile = args[i + 1];
+			args[i] = NULL;
+			append = 1;
+			break;
+		}
+		i++;
+	}
+}
+
+int checkBackground(char **args)
+{
+	int i = 0;
+	int dont_wait = 0;
+	while (args[i] != NULL) {
+		if (!strcmp(args[i], "&")) {
+			dont_wait = 1;
+			args[i] = NULL;
+		}
+		i++;
+	}
+	return dont_wait;
+}
 
 void print_prompt()
 {
@@ -135,6 +180,16 @@ int execute(char **args)
 	pid = fork();
 	/* read the man page for waitpid if having trouble understanding */
 	if (pid == 0) {
+		if (input == 1) {
+			if (!access(inputFile, R_OK)) {
+				freopen(inputFile, "r", stdin);
+			}
+		}
+		if (output == 1)
+			freopen(outputFile, "w", stdout);
+		else if (append == 1)
+			freopen(outputFile, "a+", stdout);
+
 		/* child */
 		if (execvp(args[0], args) == -1) {
 			perror("execvp");
@@ -143,7 +198,7 @@ int execute(char **args)
 	} else if (pid < 0) {
 		perror("fork");
 		exit(EXIT_FAILURE);
-	} else {
+	} else if (!dont_wait) {
 		/* parent */
 		do {
 			wait_id = waitpid(pid, &p_status, WUNTRACED);
@@ -159,6 +214,9 @@ int tengi_run(char **args)
 	if (args[0] == NULL) {
 		return 1;
 	}
+
+	checkIO(args);
+	dont_wait = checkBackground(args);
 
 	for (i = 0; i < total_builtins(); i++) {
 		if (strcmp(args[0], builtin[i]) == 0) {
