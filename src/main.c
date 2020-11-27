@@ -11,23 +11,29 @@
 #define READ_LINE_BUF 1024
 #define ARG_BUF 64
 
+extern char **environ;
+
 int in, out, input, output, append, dont_wait;
 char *inputFile, *outputFile;
+FILE *fp;
 
 /* ------------------------------------------------------------------------ */
 /* Built In Functions */
 int tengi_cd(char **args);
 int tengi_exit(char **args);
+int tengi_env();
 
 char *builtin[] = {
 	"cd",
 	"exit",
+	"env",
 
 };
 
 int (*builtin_func[])(char **) = {
 	&tengi_cd,
 	&tengi_exit,
+	&tengi_env,
 };
 
 int total_builtins()
@@ -51,6 +57,31 @@ int tengi_exit(char **args)
 {
 	printf("\nExiting tengi, Bye!\n");
 	return 0;
+}
+
+int tengi_env()
+{
+	char **env = environ;
+
+	if (output == 1) {
+		fp = fopen(outputFile, "w");
+	} else if (append == 1) {
+		fp = fopen(outputFile, "a");
+	}
+
+	if (output == 1 || append == 1) {
+		while (*env) {
+			fprintf(fp, "%s\n", *env++);
+		}
+		fclose(fp);
+	}
+
+	else {
+		while (*env) {
+			printf("%s\n", *env++);
+		}
+	}
+	return 1;
 }
 
 /* ------------------------------------------------------------------------ */
